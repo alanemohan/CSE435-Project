@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -44,6 +44,11 @@ export default function VoiceInput({ onTranscript, disabled, className }: VoiceI
   const [isSupported, setIsSupported] = useState(true);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [interimTranscript, setInterimTranscript] = useState('');
+  const onTranscriptRef = useRef(onTranscript);
+
+  useEffect(() => {
+    onTranscriptRef.current = onTranscript;
+  }, [onTranscript]);
 
   useEffect(() => {
     // Check for browser support
@@ -77,7 +82,7 @@ export default function VoiceInput({ onTranscript, disabled, className }: VoiceI
         setInterimTranscript(interim);
 
         if (finalTranscript) {
-          onTranscript(finalTranscript);
+          onTranscriptRef.current(finalTranscript);
           setInterimTranscript('');
         }
       };

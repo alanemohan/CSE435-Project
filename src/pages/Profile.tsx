@@ -114,7 +114,7 @@ export default function Profile() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ full_name: fullName } as any)
+        .update({ full_name: fullName })
         .eq('user_id', user.id);
       if (error) throw error;
       toast({ title: 'Profile Updated', description: 'Your profile has been saved successfully.' });
@@ -155,7 +155,7 @@ export default function Profile() {
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: avatarUrl } as any)
+        .update({ avatar_url: avatarUrl })
         .eq('user_id', user.id);
       if (updateError) throw updateError;
 
@@ -201,7 +201,7 @@ export default function Profile() {
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-16 relative z-10">
               <div className="relative group">
                 <Avatar className="h-24 w-24 border-4 border-card shadow-lg">
-                  <AvatarImage src={(profile as any)?.avatar_url} alt="Profile" />
+                  <AvatarImage src={profile?.avatar_url ?? undefined} alt="Profile" />
                   <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
                     {initials}
                   </AvatarFallback>
