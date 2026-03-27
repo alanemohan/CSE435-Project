@@ -34,6 +34,8 @@ export default function ImageUploader({ onTextExtracted, disabled }: ImageUpload
         ref={inputRef}
         type="file"
         accept="image/*"
+        title="Upload screenshot"
+        aria-label="Upload screenshot"
         className="hidden"
         onChange={handleFileChange}
         disabled={disabled}

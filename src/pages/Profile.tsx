@@ -177,10 +177,39 @@ export default function Profile() {
     .slice(0, 2);
 
   const safetyScore = vulnProfile?.safety_score ?? 100;
+  const clampedSafetyScore = Math.max(0, Math.min(100, Math.round(safetyScore)));
   const riskLevel = vulnProfile?.risk_level ?? 'low';
 
   const riskColor =
     riskLevel === 'high' ? 'text-danger' : riskLevel === 'medium' ? 'text-warning' : 'text-success';
+
+  const safetyWidthClass =
+    clampedSafetyScore === 0
+      ? 'w-0'
+      : clampedSafetyScore >= 95
+      ? 'w-full'
+      : clampedSafetyScore >= 90
+      ? 'w-11/12'
+      : clampedSafetyScore >= 80
+      ? 'w-10/12'
+      : clampedSafetyScore >= 70
+      ? 'w-9/12'
+      : clampedSafetyScore >= 60
+      ? 'w-8/12'
+      : clampedSafetyScore >= 50
+      ? 'w-7/12'
+      : clampedSafetyScore >= 40
+      ? 'w-6/12'
+      : clampedSafetyScore >= 30
+      ? 'w-5/12'
+      : clampedSafetyScore >= 20
+      ? 'w-4/12'
+      : clampedSafetyScore >= 10
+      ? 'w-3/12'
+      : 'w-2/12';
+
+  const safetyBarColorClass =
+    clampedSafetyScore >= 70 ? 'bg-success' : clampedSafetyScore >= 40 ? 'bg-warning' : 'bg-danger';
 
   const statCards = [
     { icon: Activity, label: 'Total Analyses', value: stats?.total ?? 0, color: 'text-primary' },
@@ -194,7 +223,7 @@ export default function Profile() {
       <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
         {/* Header Card */}
         <Card className="overflow-hidden">
-          <div className="h-32 relative" style={{ background: 'var(--gradient-primary)' }}>
+          <div className="h-32 relative bg-[image:var(--gradient-primary)]">
             <div className="absolute inset-0 bg-background/10 backdrop-blur-[1px]" />
           </div>
           <CardContent className="relative pb-6">
@@ -221,6 +250,8 @@ export default function Profile() {
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
+                  title="Upload profile picture"
+                  aria-label="Upload profile picture"
                   className="hidden"
                   onChange={handleAvatarUpload}
                 />
@@ -337,20 +368,11 @@ export default function Profile() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-muted-foreground">Safety Score</span>
-                  <span className={`text-xl font-bold font-display ${riskColor}`}>{safetyScore}/100</span>
+                  <span className={`text-xl font-bold font-display ${riskColor}`}>{clampedSafetyScore}/100</span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${safetyScore}%`,
-                      background:
-                        safetyScore >= 70
-                          ? 'hsl(var(--success))'
-                          : safetyScore >= 40
-                          ? 'hsl(var(--warning))'
-                          : 'hsl(var(--danger))',
-                    }}
+                    className={`h-full rounded-full transition-all duration-700 ${safetyWidthClass} ${safetyBarColorClass}`}
                   />
                 </div>
               </div>
