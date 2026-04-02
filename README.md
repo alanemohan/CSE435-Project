@@ -1,130 +1,73 @@
-# CivicGuard AI
+# Welcome to your Lovable project
 
-CivicGuard AI is a React + TypeScript web application focused on scam awareness, prevention, and reporting support. It combines educational content, analysis tools, and user-focused safety workflows in a single dashboard-style experience.
+## Project info
 
-## Tech Stack
+**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
-- **Frontend:** React 18, TypeScript, Vite
-- **Styling/UI:** Tailwind CSS, shadcn/ui, Radix UI
-- **Routing:** React Router v6
-- **Data/State:** TanStack Query
-- **Auth/Backend:** Supabase (Auth + database types)
-- **Testing:** Vitest + Testing Library
-- **Linting:** ESLint
+## How can I edit this code?
 
-## Core Capabilities
+There are several ways of editing your application.
 
-- Scam analysis workflows
-- Complaint generation support
-- Evidence vault features
-- Scam education hub (includes scam encyclopedia + response checklist)
-- Community alerts and watchlist flows
-- Authenticated dashboard experience with profile management
+**Use Lovable**
 
-## Routes
+Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
 
-Based on current route configuration in `src/App.tsx`:
+Changes made via Lovable will be committed automatically to this repo.
 
-- `/` – Landing page
-- `/auth` – Login/Signup
-- `/dashboard` – Main dashboard
-- `/scam-analyzer` – Message/content scam analysis
-- `/job-checker` – Job offer legitimacy check
-- `/complaint-generator` – Complaint drafting flow
-- `/watchlist` – Keyword/watchlist tracking
-- `/vulnerability-profile` – Vulnerability profile
-- `/vulnerability-analysis` – Extended vulnerability analysis page
-- `/evidence-vault` – Evidence storage/organization
-- `/education-hub` – Scam education and prevention content
-- `/community-alerts` – Community-reported alert feed
-- `/about` – Project information
-- `/profile` – User profile
-- `*` – Not Found fallback
+**Use your preferred IDE**
 
-## Project Structure
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-```text
-src/
-  components/
-    education/
-    layout/
-    ui/
-  contexts/
-  hooks/
-  integrations/
-    supabase/
-  lib/
-  pages/
-  test/
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Follow these steps:
+
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
+npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
+npm run dev
 ```
 
-## Prerequisites
+**Edit a file directly in GitHub**
 
-- **Node.js** 18+ (recommended LTS)
-- **npm** 9+ (or Bun if you prefer, lockfile is present)
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-## Environment Variables
+**Use GitHub Codespaces**
 
-Create a `.env` file in the project root with:
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-```bash
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_or_publishable_key
-```
+## What technologies are used for this project?
 
-These values are consumed by `src/integrations/supabase/client.ts`.
+This project is built with:
 
-## Local Development
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start dev server:
-   ```bash
-   npm run dev
-   ```
-3. Open the local Vite URL shown in terminal (typically `http://localhost:5173`).
+## How can I deploy this project?
 
-## Available Scripts
+Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
 
-- `npm run dev` – Start development server
-- `npm run build` – Production build
-- `npm run build:dev` – Development-mode build
-- `npm run preview` – Preview production build locally
-- `npm run lint` – Run ESLint checks
-- `npm run test` – Run Vitest once
-- `npm run test:watch` – Run Vitest in watch mode
+## Can I connect a custom domain to my Lovable project?
 
-## Testing
+Yes, you can!
 
-Run:
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-```bash
-npm run test
-```
-
-Current test scaffold is under `src/test/`.
-
-## Authentication Notes
-
-- Auth state is managed via `AuthContext`.
-- Session persistence and refresh behavior are enabled in Supabase client configuration.
-- Protected pages redirect unauthenticated users to `/auth`.
-
-## Contributing Workflow
-
-1. Create a feature branch
-2. Make focused changes
-3. Run lint/tests locally
-4. Open PR with summary + screenshots (for UI changes)
-
-## Deployment Notes
-
-- Build output is generated by Vite.
-- Ensure `VITE_SUPABASE_*` variables are set in your deployment environment.
-- Configure your host to route SPA paths back to `index.html`.
-
-## Security/Safety Notes
-
-This project addresses scam prevention and response education. It is informational and assistive software; users should still report active incidents to official channels (e.g., cybercrime portals and local authorities).
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)

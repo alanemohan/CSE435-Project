@@ -67,11 +67,10 @@ export default function Watchlist() {
         title: 'Keyword Added',
         description: `"${keyword}" has been added to your watchlist.`,
       });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to add keyword.';
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: message,
+        description: error.message || 'Failed to add keyword.',
         variant: 'destructive',
       });
     }

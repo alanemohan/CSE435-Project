@@ -18,6 +18,7 @@ import EducationHub from "./pages/EducationHub";
 import CommunityAlerts from "./pages/CommunityAlerts";
 import About from "./pages/About";
 import Profile from "./pages/Profile";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/education-hub" element={<EducationHub />} />
             <Route path="/community-alerts" element={<CommunityAlerts />} />
             <Route path="/about" element={<About />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

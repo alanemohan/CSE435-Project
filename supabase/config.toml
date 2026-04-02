@@ -1,0 +1,28 @@
+project_id = "oiasnefrcwtgfzvilzds"
+
+[functions.analyze-scam]
+verify_jwt = false
+
+[functions.analyze-job]
+verify_jwt = false
+
+[functions.generate-complaint]
+verify_jwt = false
+
+[functions.ocr-analyze]
+verify_jwt = false
+
+[functions.translate-result]
+verify_jwt = false
+
+[functions.analyze-vulnerability]
+verify_jwt = false
+
+[functions.find-authority]
+verify_jwt = false
+
+[functions.generate-report-template]
+verify_jwt = false
+
+[functions.submit-scam-pattern]
+verify_jwt = false

@@ -9,6 +9,7 @@ import ThemeToggle from '@/components/ThemeToggle';
  const navLinks = [
    { label: 'Home', path: '/' },
    { label: 'About', path: '/about' },
+   { label: 'Pricing', path: '/pricing' },
  ];
  
  export default function PublicNavbar() {

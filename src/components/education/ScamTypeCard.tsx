@@ -1,10 +1,9 @@
-import { ArrowRight } from 'lucide-react';
-import type { ElementType } from 'react';
+import { cn } from '@/lib/utils';
 
 interface ScamType {
   id: string;
   title: string;
-  icon: ElementType;
+  icon: React.ElementType;
   color: string;
   description: string;
   howItWorks: string[];
@@ -22,26 +21,20 @@ interface ScamTypeCardProps {
 export default function ScamTypeCard({ scam, isSelected, onClick }: ScamTypeCardProps) {
   return (
     <button
-      type="button"
       onClick={onClick}
-      className={`w-full text-left glass-card rounded-xl p-5 transition-all border hover:scale-[1.01] ${
-        isSelected ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/30'
-      }`}
-      aria-label={`View details for ${scam.title}`}
+      className={cn(
+        'glass-card rounded-xl p-6 text-left hover:border-primary/50 transition-all hover:-translate-y-0.5',
+        isSelected ? 'border-primary ring-2 ring-primary/20' : ''
+      )}
     >
-      <div className="flex items-start gap-3">
-        <div className={`p-3 rounded-lg bg-secondary/50 ${scam.color}`}>
-          <scam.icon className="h-5 w-5" />
+      <div className="flex items-start gap-4">
+        <div className={cn('p-3 rounded-lg bg-card', scam.color)}>
+          <scam.icon className="h-6 w-6" />
         </div>
-        <div className="flex-1">
-          <h3 className="font-semibold mb-1">{scam.title}</h3>
-          <p className="text-sm text-muted-foreground line-clamp-3">{scam.description}</p>
+        <div>
+          <h3 className="font-display font-semibold mb-1">{scam.title}</h3>
+          <p className="text-sm text-muted-foreground line-clamp-2">{scam.description}</p>
         </div>
-      </div>
-
-      <div className="mt-4 inline-flex items-center gap-2 text-sm text-primary font-medium">
-        Learn more
-        <ArrowRight className="h-4 w-4" />
       </div>
     </button>
   );

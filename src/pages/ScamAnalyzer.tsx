@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSaveAnalysis } from '@/hooks/useAnalysisHistory';
+import { useSaveAnalysis, useAnalysisHistory } from '@/hooks/useAnalysisHistory';
 import { useKeywordWatchlist } from '@/hooks/useKeywordWatchlist';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import RiskMeter from '@/components/ui/RiskMeter';
@@ -14,6 +14,7 @@ import SmartAssistant from '@/components/SmartAssistant';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -40,9 +41,26 @@ import {
   Tag,
   Users,
   PhoneCall,
+  Copy,
+  Download,
+  Clock,
+  Zap,
+  Eye,
+  ShieldAlert,
+  ShieldCheck,
+  Brain,
+  Globe,
+  Database,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+
+interface ThreatIntelResult {
+  url: string;
+  urlhaus_match: boolean;
+  threat?: string;
+  tags?: string[];
+}
 
 interface AnalysisResult {
   riskScore: number;
@@ -53,6 +71,9 @@ interface AnalysisResult {
   detectedPhones: string[];
   manipulationTactics: string[];
   watchlistMatches: string[];
+  threatIntelResults?: ThreatIntelResult[];
+  threatIntelMatch?: boolean;
+  dataSources?: string[];
 }
 
 interface ProxyInfo {
@@ -68,6 +89,7 @@ export default function ScamAnalyzer() {
   const navigate = useNavigate();
   const saveAnalysis = useSaveAnalysis();
   const { data: watchlist } = useKeywordWatchlist();
+  const { data: history } = useAnalysisHistory();
 
   const [messageText, setMessageText] = useState('');
   const [callDescription, setCallDescription] = useState('');
@@ -76,6 +98,8 @@ export default function ScamAnalyzer() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [patternSubmitted, setPatternSubmitted] = useState(false);
+  const [analysisTime, setAnalysisTime] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
   const [proxyInfo, setProxyInfo] = useState<ProxyInfo>({
     enabled: false,
     relationship: '',
@@ -101,18 +125,13 @@ export default function ScamAnalyzer() {
   const submitToPatternDatabase = async (riskScore: number, scamType: string) => {
     try {
       const { data } = await supabase.functions.invoke('submit-scam-pattern', {
-        body: {
-          messageText,
-          scamType,
-          riskScore,
-        },
+        body: { messageText, scamType, riskScore },
       });
-
       if (data?.submitted) {
         setPatternSubmitted(true);
         toast({
           title: 'Pattern Contributed',
-          description: data.isNew 
+          description: data.isNew
             ? 'New scam pattern identified and added to community database.'
             : `Similar pattern seen ${data.similarityCount} times before.`,
         });
@@ -124,11 +143,10 @@ export default function ScamAnalyzer() {
 
   const handleAnalyze = async () => {
     const textToAnalyze = analysisMode === 'call' ? callDescription : messageText;
-    
     if (!textToAnalyze.trim()) {
       toast({
         title: 'Error',
-        description: analysisMode === 'call' 
+        description: analysisMode === 'call'
           ? 'Please describe the phone call.'
           : 'Please enter a message to analyze.',
         variant: 'destructive',
@@ -139,11 +157,10 @@ export default function ScamAnalyzer() {
     setIsAnalyzing(true);
     setResult(null);
     setPatternSubmitted(false);
+    const startTime = Date.now();
 
     try {
-      const textToAnalyze = analysisMode === 'call' ? callDescription : messageText;
       const watchlistMatches = checkWatchlistMatches(textToAnalyze);
-      
       const { data, error } = await supabase.functions.invoke('analyze-scam', {
         body: {
           message: textToAnalyze,
@@ -155,6 +172,7 @@ export default function ScamAnalyzer() {
       });
 
       if (error) throw error;
+      setAnalysisTime(((Date.now() - startTime) / 1000));
 
       const analysisResult: AnalysisResult = {
         riskScore: data.riskScore,
@@ -165,11 +183,13 @@ export default function ScamAnalyzer() {
         detectedPhones: data.detectedPhones || [],
         manipulationTactics: data.manipulationTactics || [],
         watchlistMatches,
+        threatIntelResults: data.threatIntelResults,
+        threatIntelMatch: data.threatIntelMatch,
+        dataSources: data.dataSources,
       };
 
       setResult(analysisResult);
 
-      // Save to history
       await saveAnalysis.mutateAsync({
         analysis_type: 'scam',
         input_text: textToAnalyze,
@@ -182,7 +202,6 @@ export default function ScamAnalyzer() {
         category: analysisResult.scamType,
       });
 
-      // Submit high-risk patterns to community database
       if (analysisResult.riskScore >= 50) {
         submitToPatternDatabase(analysisResult.riskScore, analysisResult.scamType);
       }
@@ -208,13 +227,8 @@ export default function ScamAnalyzer() {
     setCallDescription('');
     setResult(null);
     setPatternSubmitted(false);
-    setProxyInfo({
-      enabled: false,
-      relationship: '',
-      victimName: '',
-      victimAge: '',
-      victimCity: '',
-    });
+    setAnalysisTime(0);
+    setProxyInfo({ enabled: false, relationship: '', victimName: '', victimAge: '', victimCity: '' });
   };
 
   const handleVoiceTranscript = (text: string) => {
@@ -229,22 +243,30 @@ export default function ScamAnalyzer() {
     setMessageText(text);
   };
 
-  // Prepare content for translation
+  const copyResultToClipboard = () => {
+    if (!result) return;
+    const text = `CivicShield Scam Analysis Report\n${'='.repeat(35)}\nRisk Score: ${result.riskScore}/100\nScam Type: ${result.scamType}\n\nRed Flags:\n${result.redFlags.map(f => `• ${f}`).join('\n')}\n\nSafety Advice:\n${result.safetyAdvice.map(a => `• ${a}`).join('\n')}\n\nManipulation Tactics: ${result.manipulationTactics.join(', ')}\n\nData Sources: ${result.dataSources?.join(', ') || 'AI Analysis'}`;
+    navigator.clipboard.writeText(text);
+    toast({ title: 'Copied!', description: 'Analysis report copied to clipboard.' });
+  };
+
   const getTranslatableContent = () => {
     if (!result) return '';
-    let content = `Risk Level: ${result.riskScore}%\n`;
-    content += `Scam Type: ${result.scamType}\n\n`;
-    
-    if (result.redFlags.length > 0) {
-      content += `Red Flags:\n${result.redFlags.map(f => `• ${f}`).join('\n')}\n\n`;
-    }
-    
-    if (result.safetyAdvice.length > 0) {
-      content += `Safety Advice:\n${result.safetyAdvice.map(a => `• ${a}`).join('\n')}`;
-    }
-    
+    let content = `Risk Level: ${result.riskScore}%\nScam Type: ${result.scamType}\n\n`;
+    if (result.redFlags.length > 0) content += `Red Flags:\n${result.redFlags.map(f => `• ${f}`).join('\n')}\n\n`;
+    if (result.safetyAdvice.length > 0) content += `Safety Advice:\n${result.safetyAdvice.map(a => `• ${a}`).join('\n')}`;
     return content;
   };
+
+  const getVerdictInfo = (score: number) => {
+    if (score >= 80) return { label: 'DANGEROUS', color: 'bg-danger text-danger-foreground', icon: ShieldAlert, desc: 'This is almost certainly a scam. Do NOT interact.' };
+    if (score >= 60) return { label: 'HIGH RISK', color: 'bg-danger/80 text-danger-foreground', icon: ShieldAlert, desc: 'Strong scam indicators detected. Proceed with extreme caution.' };
+    if (score >= 40) return { label: 'SUSPICIOUS', color: 'bg-warning text-warning-foreground', icon: AlertTriangle, desc: 'Multiple suspicious elements found. Verify independently.' };
+    if (score >= 20) return { label: 'LOW RISK', color: 'bg-success/80 text-success-foreground', icon: Shield, desc: 'Few concerns detected, but always stay vigilant.' };
+    return { label: 'SAFE', color: 'bg-success text-success-foreground', icon: ShieldCheck, desc: 'No significant scam indicators found.' };
+  };
+
+  const recentScamHistory = history?.filter(h => h.analysis_type === 'scam').slice(0, 5) || [];
 
   if (authLoading) {
     return (
@@ -258,24 +280,64 @@ export default function ScamAnalyzer() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+      <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
         {/* Header */}
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-danger/10">
-              <MessageSquareWarning className="h-6 w-6 text-danger" />
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-danger/20 to-danger/5">
+                <MessageSquareWarning className="h-7 w-7 text-danger" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-display font-bold">Scam Analyzer</h1>
+                <p className="text-sm text-muted-foreground">AI + Real-time Threat Intelligence</p>
+              </div>
             </div>
-            <h1 className="text-2xl font-display font-bold">Scam Message Analyzer</h1>
           </div>
-          <p className="text-muted-foreground">
-            Analyze suspicious messages, screenshots, or describe phone calls to detect potential scams.
-          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowHistory(!showHistory)}
+              className="gap-2"
+            >
+              <Clock className="h-4 w-4" />
+              History ({recentScamHistory.length})
+            </Button>
+          </div>
         </div>
+
+        {/* Quick History Panel */}
+        {showHistory && recentScamHistory.length > 0 && (
+          <div className="glass-card rounded-xl p-4 animate-slide-up">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              Recent Scam Analyses
+            </h3>
+            <div className="space-y-2">
+              {recentScamHistory.map((item) => (
+                <div key={item.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${
+                    (item.risk_score ?? 0) >= 70 ? 'bg-danger' : (item.risk_score ?? 0) >= 30 ? 'bg-warning' : 'bg-success'
+                  }`} />
+                  <p className="text-sm truncate flex-1">{item.input_text.slice(0, 80)}...</p>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                    (item.risk_score ?? 0) >= 70 ? 'bg-danger/10 text-danger' :
+                    (item.risk_score ?? 0) >= 30 ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
+                  }`}>{item.risk_score ?? 0}%</span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Proxy Reporting Mode */}
         <ProxyReportingMode onProxyChange={setProxyInfo} />
 
-        {/* Input Section with Tabs */}
+        {/* Input Section */}
         <div className="glass-card rounded-xl p-6">
           <Tabs value={analysisMode} onValueChange={setAnalysisMode} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -290,7 +352,6 @@ export default function ScamAnalyzer() {
             </TabsList>
 
             <TabsContent value="message" className="space-y-4">
-              {/* OCR Upload */}
               <div>
                 <Label className="mb-2 block">Upload Screenshot (OCR)</Label>
                 <ImageUploader onTextExtracted={handleOCRExtracted} disabled={isAnalyzing} />
@@ -330,8 +391,17 @@ export default function ScamAnalyzer() {
                   placeholder="Paste the suspicious message here or use voice input..."
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  className="min-h-[200px] bg-secondary/50 border-border/50 focus:border-primary resize-none"
+                  className="min-h-[180px] bg-secondary/50 border-border/50 focus:border-primary resize-none"
                 />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{messageText.length} characters</span>
+                  {messageText.length > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-3 w-3" />
+                      Ready to analyze
+                    </span>
+                  )}
+                </div>
               </div>
             </TabsContent>
 
@@ -355,10 +425,10 @@ export default function ScamAnalyzer() {
                 </div>
                 <Textarea
                   id="callDescription"
-                  placeholder="Example: I received a call from someone claiming to be from SBI. They said my account was blocked and asked me to share my OTP to verify my identity. They sounded urgent and threatened legal action if I didn't comply..."
+                  placeholder="Example: I received a call from someone claiming to be from SBI..."
                   value={callDescription}
                   onChange={(e) => setCallDescription(e.target.value)}
-                  className="min-h-[200px] bg-secondary/50 border-border/50 focus:border-primary resize-none"
+                  className="min-h-[180px] bg-secondary/50 border-border/50 focus:border-primary resize-none"
                 />
               </div>
             </TabsContent>
@@ -368,33 +438,99 @@ export default function ScamAnalyzer() {
             <Button
               onClick={handleAnalyze}
               disabled={isAnalyzing || (analysisMode === 'call' ? !callDescription.trim() : !messageText.trim())}
-              className="flex-1 bg-primary hover:bg-primary/90"
+              className="flex-1 bg-primary hover:bg-primary/90 h-12 text-base"
             >
               {isAnalyzing ? (
-                <LoadingSpinner size="sm" />
+                <div className="flex items-center gap-2">
+                  <LoadingSpinner size="sm" />
+                  <span>Scanning threat databases...</span>
+                </div>
               ) : (
                 <>
-                  <Send className="h-4 w-4 mr-2" />
+                  <Zap className="h-5 w-5 mr-2" />
                   {analysisMode === 'call' ? 'Analyze Call' : 'Analyze Message'}
                 </>
               )}
             </Button>
-            <Button variant="outline" onClick={handleReset} disabled={isAnalyzing}>
+            <Button variant="outline" onClick={handleReset} disabled={isAnalyzing} className="h-12">
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset
             </Button>
           </div>
+
+          {/* Analyzing animation */}
+          {isAnalyzing && (
+            <div className="mt-4 space-y-2 animate-fade-in">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Brain className="h-3.5 w-3.5 animate-pulse text-primary" />
+                  AI Analysis in progress...
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 text-primary" />
+                  Checking URLhaus, ThreatFox, PhishStats
+                </span>
+              </div>
+              <Progress value={undefined} className="h-1.5" />
+            </div>
+          )}
         </div>
 
         {/* Results Section */}
         {result && (
           <div className="space-y-6 animate-slide-up">
-            {/* Risk Score */}
+            {/* Verdict Banner */}
+            {(() => {
+              const verdict = getVerdictInfo(result.riskScore);
+              const VerdictIcon = verdict.icon;
+              return (
+                <div className={`rounded-xl p-5 ${verdict.color} flex flex-col sm:flex-row items-center gap-4`}>
+                  <VerdictIcon className="h-10 w-10 shrink-0" />
+                  <div className="flex-1 text-center sm:text-left">
+                    <div className="flex items-center justify-center sm:justify-start gap-3 mb-1">
+                      <span className="text-2xl font-display font-black tracking-wide">{verdict.label}</span>
+                      <span className="text-lg font-bold opacity-80">— {result.riskScore}/100</span>
+                    </div>
+                    <p className="text-sm opacity-90">{verdict.desc}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button variant="secondary" size="sm" onClick={copyResultToClipboard} className="gap-1.5">
+                      <Copy className="h-3.5 w-3.5" />
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Analysis Meta */}
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/50">
+                <Clock className="h-3 w-3" />
+                {analysisTime.toFixed(1)}s
+              </span>
+              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/50">
+                <Database className="h-3 w-3" />
+                {result.dataSources?.length || 1} sources
+              </span>
+              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                <Shield className="h-3 w-3" />
+                {result.scamType}
+              </span>
+              {result.threatIntelMatch && (
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-danger/10 text-danger font-medium">
+                  <ShieldAlert className="h-3 w-3" />
+                  Threat DB Match
+                </span>
+              )}
+            </div>
+
+            {/* Risk Score Visual */}
             <div className="glass-card rounded-xl p-6">
               <div className="flex flex-col md:flex-row items-center gap-8">
                 <RiskMeter score={result.riskScore} size="lg" />
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-xl font-display font-semibold mb-2">
+                <div className="flex-1 text-center md:text-left space-y-3">
+                  <h3 className="text-xl font-display font-semibold">
                     {result.scamType || 'Unknown Scam Type'}
                   </h3>
                   <p className="text-muted-foreground">
@@ -404,6 +540,21 @@ export default function ScamAnalyzer() {
                       ? 'This message has some suspicious elements. Exercise caution before taking any action.'
                       : 'This message appears to be relatively safe, but always stay vigilant.'}
                   </p>
+                  {/* Confidence indicators */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center p-2 rounded-lg bg-secondary/30">
+                      <p className="text-lg font-bold text-danger">{result.redFlags.length}</p>
+                      <p className="text-[10px] text-muted-foreground">Red Flags</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-secondary/30">
+                      <p className="text-lg font-bold text-warning">{result.manipulationTactics.length}</p>
+                      <p className="text-[10px] text-muted-foreground">Tactics</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-secondary/30">
+                      <p className="text-lg font-bold text-primary">{result.detectedUrls.length + result.detectedPhones.length}</p>
+                      <p className="text-[10px] text-muted-foreground">IOCs Found</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -432,10 +583,7 @@ export default function ScamAnalyzer() {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {result.watchlistMatches.map((keyword, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 rounded-full bg-warning/10 text-warning text-sm font-medium"
-                    >
+                    <span key={i} className="px-3 py-1 rounded-full bg-warning/10 text-warning text-sm font-medium">
                       {keyword}
                     </span>
                   ))}
@@ -443,43 +591,41 @@ export default function ScamAnalyzer() {
               </div>
             )}
 
-            {/* Red Flags */}
-            {result.redFlags.length > 0 && (
-              <div className="glass-card rounded-xl p-6">
-                <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
-                  <XCircle className="h-5 w-5 text-danger" />
-                  Red Flags Detected
-                </h3>
-                <ul className="space-y-2">
-                  {result.redFlags.map((flag, i) => (
-                    <li key={i} className="flex items-start gap-2 text-muted-foreground">
-                      <AlertTriangle className="h-4 w-4 text-danger mt-0.5 shrink-0" />
-                      {flag}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Manipulation Tactics */}
-            {result.manipulationTactics.length > 0 && (
-              <div className="glass-card rounded-xl p-6">
-                <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-warning" />
-                  Psychological Manipulation Tactics
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {result.manipulationTactics.map((tactic, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 rounded-full bg-warning/10 text-warning text-sm"
-                    >
-                      {tactic}
-                    </span>
-                  ))}
+            {/* Red Flags & Manipulation side by side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {result.redFlags.length > 0 && (
+                <div className="glass-card rounded-xl p-6">
+                  <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
+                    <XCircle className="h-5 w-5 text-danger" />
+                    Red Flags ({result.redFlags.length})
+                  </h3>
+                  <ul className="space-y-2">
+                    {result.redFlags.map((flag, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground p-2 rounded-lg bg-danger/5">
+                        <AlertTriangle className="h-4 w-4 text-danger mt-0.5 shrink-0" />
+                        {flag}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-            )}
+              )}
+
+              {result.manipulationTactics.length > 0 && (
+                <div className="glass-card rounded-xl p-6">
+                  <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-warning" />
+                    Manipulation Tactics ({result.manipulationTactics.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {result.manipulationTactics.map((tactic, i) => (
+                      <div key={i} className="px-3 py-2 rounded-lg bg-warning/5 border border-warning/10 text-sm text-muted-foreground">
+                        ⚡ {tactic}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Detected URLs & Phones */}
             {(result.detectedUrls.length > 0 || result.detectedPhones.length > 0) && (
@@ -491,14 +637,18 @@ export default function ScamAnalyzer() {
                       Detected URLs
                     </h3>
                     <ul className="space-y-2">
-                      {result.detectedUrls.map((url, i) => (
-                        <li
-                          key={i}
-                          className="text-sm text-muted-foreground bg-secondary/50 px-3 py-2 rounded-lg break-all"
-                        >
-                          {url}
-                        </li>
-                      ))}
+                      {result.detectedUrls.map((url, i) => {
+                        const isMalicious = result.threatIntelResults?.some(r => r.url === url && r.urlhaus_match);
+                        return (
+                          <li key={i} className={`text-sm text-muted-foreground px-3 py-2 rounded-lg break-all flex items-start gap-2 ${
+                            isMalicious ? 'bg-danger/10 border border-danger/20' : 'bg-secondary/50'
+                          }`}>
+                            {isMalicious && <ShieldAlert className="h-4 w-4 text-danger shrink-0 mt-0.5" />}
+                            <span>{url}</span>
+                            {isMalicious && <span className="text-danger text-xs font-bold shrink-0">MALICIOUS</span>}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
@@ -510,10 +660,7 @@ export default function ScamAnalyzer() {
                     </h3>
                     <ul className="space-y-2">
                       {result.detectedPhones.map((phone, i) => (
-                        <li
-                          key={i}
-                          className="text-sm text-muted-foreground bg-secondary/50 px-3 py-2 rounded-lg"
-                        >
+                        <li key={i} className="text-sm text-muted-foreground bg-secondary/50 px-3 py-2 rounded-lg">
                           {phone.replace(/(\d{3})\d{4}(\d+)/, '$1****$2')}
                         </li>
                       ))}
@@ -532,7 +679,7 @@ export default function ScamAnalyzer() {
                 </h3>
                 <ul className="space-y-2">
                   {result.safetyAdvice.map((advice, i) => (
-                    <li key={i} className="flex items-start gap-2 text-muted-foreground">
+                    <li key={i} className="flex items-start gap-2 text-muted-foreground p-2 rounded-lg bg-success/5">
                       <Shield className="h-4 w-4 text-success mt-0.5 shrink-0" />
                       {advice}
                     </li>
@@ -545,14 +692,39 @@ export default function ScamAnalyzer() {
             <SmartAssistant riskScore={result.riskScore} scamType={result.scamType} />
 
             {/* Regional Language Translation */}
-            <LanguageTranslator 
-              content={getTranslatableContent()} 
-              contentType="scam analysis" 
-            />
+            <LanguageTranslator content={getTranslatableContent()} contentType="scam analysis" />
+
+            {/* Threat Intelligence Sources */}
+            {result.dataSources && result.dataSources.length > 0 && (
+              <div className="glass-card rounded-xl p-6 border-primary/20">
+                <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
+                  <Database className="h-5 w-5 text-primary" />
+                  Threat Intelligence Sources
+                </h3>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {result.dataSources.map((src, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center gap-1">
+                      <Globe className="h-3 w-3" />
+                      {src}
+                    </span>
+                  ))}
+                </div>
+                {result.threatIntelResults && result.threatIntelResults.some(r => r.urlhaus_match) && (
+                  <div className="p-3 rounded-lg bg-danger/10 border border-danger/20">
+                    <p className="text-sm text-danger font-medium">⚠️ URLs matched in threat databases:</p>
+                    {result.threatIntelResults.filter(r => r.urlhaus_match).map((r, i) => (
+                      <p key={i} className="text-xs text-muted-foreground mt-1 break-all">
+                        {r.url} — Threat: {r.threat || 'malware'} {r.tags?.length ? `(${r.tags.join(', ')})` : ''}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Disclaimer */}
             <p className="text-xs text-muted-foreground text-center">
-              ⚠️ This analysis is for informational purposes only and should not be considered as legal or professional advice.
+              ⚠️ Analysis powered by AI + real-time threat intelligence from URLhaus, ThreatFox & PhishStats. Not legal advice.
             </p>
           </div>
         )}

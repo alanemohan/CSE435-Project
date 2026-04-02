@@ -5,7 +5,6 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Input } from '@/components/ui/input';
 import ScamTypeCard from '@/components/education/ScamTypeCard';
 import ScamDetailView from '@/components/education/ScamDetailView';
-import ReportScamChecklist from '@/components/education/ReportScamChecklist';
 import {
   GraduationCap,
   Search,
@@ -242,8 +241,6 @@ export default function EducationHub() {
             ))}
           </div>
         </div>
-
-        <ReportScamChecklist />
 
         {/* Search */}
         <div className="relative">
