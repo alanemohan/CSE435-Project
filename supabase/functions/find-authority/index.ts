@@ -12,10 +12,10 @@ serve(async (req) => {
 
   try {
     const { category, description, location } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!AI_GATEWAY_API_KEY) {
+      throw new Error("AI_GATEWAY_API_KEY is not configured");
     }
 
     const systemPrompt = `You are an expert on Indian government grievance redressal systems and complaint filing procedures.
@@ -42,10 +42,10 @@ Provide the most accurate authority information. Return a JSON object with:
 Focus on OFFICIAL Indian government portals. Be specific and accurate.
 Return ONLY valid JSON.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(Deno.env.get("AI_GATEWAY_URL")!, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -99,3 +99,4 @@ Return ONLY valid JSON.`;
     );
   }
 });
+

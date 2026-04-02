@@ -42,7 +42,7 @@ export default function Pricing() {
     if (plan === 'enterprise') {
       toast({
         title: 'Enterprise Plan',
-        description: 'Contact our sales team at enterprise@civicshield.com for custom pricing.',
+        description: 'Contact Alane Mohan at alanemohan@gmail.com for custom pricing.',
       });
       return;
     }

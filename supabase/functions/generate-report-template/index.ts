@@ -40,10 +40,10 @@ serve(async (req) => {
 
   try {
     const { templateType, incidentDescription, userDetails, incidentDate, location } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!AI_GATEWAY_API_KEY) {
+      throw new Error("AI_GATEWAY_API_KEY is not configured");
     }
 
     const template = REPORT_TEMPLATES[templateType as keyof typeof REPORT_TEMPLATES] || REPORT_TEMPLATES.consumer;
@@ -70,10 +70,10 @@ Use formal, legal language appropriate for ${template.authority}.
 Include placeholders like [YOUR NAME] where user needs to fill in.
 Return ONLY valid JSON.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(Deno.env.get("AI_GATEWAY_URL")!, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -122,3 +122,4 @@ Return ONLY valid JSON.`;
     );
   }
 });
+

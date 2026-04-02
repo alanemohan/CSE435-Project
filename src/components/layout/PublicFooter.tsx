@@ -45,16 +45,17 @@
            <div>
              <h4 className="font-semibold mb-4 text-sm">Contact</h4>
              <ul className="space-y-2 text-sm">
+                <li className="text-muted-foreground">Alane Mohan</li>
                <li className="flex items-center gap-2 text-muted-foreground">
                  <Mail className="h-4 w-4" />
-                 support@civicshield.in
+                  alanemohan@gmail.com
                </li>
              </ul>
              <div className="flex items-center gap-3 mt-4">
-               <a href="#" className="p-2 rounded-lg bg-secondary/50 hover:bg-primary/10 transition-colors">
+              <a href="#" aria-label="Twitter profile" title="Twitter" className="p-2 rounded-lg bg-secondary/50 hover:bg-primary/10 transition-colors">
                  <Twitter className="h-4 w-4 text-muted-foreground hover:text-primary" />
                </a>
-               <a href="#" className="p-2 rounded-lg bg-secondary/50 hover:bg-primary/10 transition-colors">
+              <a href="#" aria-label="GitHub profile" title="GitHub" className="p-2 rounded-lg bg-secondary/50 hover:bg-primary/10 transition-colors">
                  <Github className="h-4 w-4 text-muted-foreground hover:text-primary" />
                </a>
              </div>

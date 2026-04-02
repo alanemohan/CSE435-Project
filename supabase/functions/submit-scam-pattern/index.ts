@@ -31,7 +31,7 @@ function extractPatternFeatures(text: string): { hash: string; features: string[
   if (/block|suspend|deactivate/i.test(lowered)) features.push("account_threat");
   if (/click.*link|tap.*here/i.test(lowered)) features.push("link_bait");
   if (/otp|code|password/i.test(lowered)) features.push("credential_request");
-  if (/₹|rs\.?|inr|lakh|crore/i.test(lowered)) features.push("money_mention");
+  if (/rs\.?|inr|lakh|crore/i.test(lowered)) features.push("money_mention");
   if (/bank|upi|paytm|phonepe|gpay/i.test(lowered)) features.push("payment_mention");
   if (/job|offer|salary|work from home/i.test(lowered)) features.push("job_scam");
   if (/courier|delivery|package/i.test(lowered)) features.push("delivery_scam");
@@ -132,3 +132,4 @@ serve(async (req) => {
     );
   }
 });
+

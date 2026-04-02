@@ -198,12 +198,13 @@ export default function About() {
                <Mail className="h-10 w-10 text-primary" />
             </div>
             <h2 className="text-2xl font-display font-semibold mb-2">Get in Touch</h2>
-             <p className="text-muted-foreground mb-6">
-              Have questions or feedback? We'd love to hear from you.
+             <p className="text-muted-foreground mb-3">
+              Have questions or feedback? Reach out directly.
             </p>
-             <a href="mailto:support@civicshield.in" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors">
+            <p className="text-sm text-muted-foreground mb-6">Alane Mohan</p>
+             <a href="mailto:alanemohan@gmail.com" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors">
                <Mail className="h-4 w-4" />
-               support@civicshield.in
+               alanemohan@gmail.com
              </a>
           </div>
         </div>
@@ -326,8 +327,11 @@ export default function About() {
            <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">
             Start Your Protection Today
           </h2>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-muted-foreground mb-4">
             Join thousands of citizens who trust CivicShield for their digital safety.
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Contact: Alane Mohan • alanemohan@gmail.com
           </p>
            <Button size="lg" asChild className="glow-primary px-10">
             <Link to="/auth">

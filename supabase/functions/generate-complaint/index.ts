@@ -12,10 +12,10 @@ serve(async (req) => {
 
   try {
     const { category, incidentDescription, incidentDate, location, serviceProvider, urgency, amountLost, hasEvidence, evidenceDescription, isProxyReport, proxyRelation } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!AI_GATEWAY_API_KEY) {
+      throw new Error("AI_GATEWAY_API_KEY is not configured");
     }
 
     const categoryAuthorities: Record<string, { authority: string; portal: string }> = {
@@ -40,7 +40,7 @@ Incident Date: ${incidentDate || "Not specified"}
 Location: ${location || "Not specified"}
 Service Provider: ${serviceProvider || "Not specified"}
 Urgency Level: ${urgency || "medium"}
-Amount Lost: ${amountLost ? "₹" + amountLost : "Not specified"}
+Amount Lost: ${amountLost ? "Rs. " + amountLost : "Not specified"}
 Evidence Available: ${hasEvidence ? "Yes - " + (evidenceDescription || "Available") : "Not mentioned"}
 ${isProxyReport ? `Filed on behalf of: ${proxyRelation || "another person"}` : ""}
 
@@ -49,7 +49,7 @@ Return a JSON object with:
 - formalComplaint: string (the full formal complaint letter with proper salutation, legal language, body with numbered paragraphs, relief sought, and closing. Include placeholder [YOUR NAME], [YOUR ADDRESS], [YOUR PHONE], [YOUR EMAIL])
 - suggestedAuthority: string (primary authority to file with)
 - suggestedPortal: string (online portal URL)
-- legalReferences: array of strings (relevant Indian laws, acts, sections — e.g., "Information Technology Act, 2000 - Section 66C", "Consumer Protection Act, 2019 - Section 35")
+- legalReferences: array of strings (relevant Indian laws, acts, sections - e.g., "Information Technology Act, 2000 - Section 66C", "Consumer Protection Act, 2019 - Section 35")
 - nextSteps: array of strings (actionable steps the complainant should take, in order)
 - estimatedTimeline: string (expected resolution timeline based on category)
 - alternativeAuthorities: array of strings (other bodies where complaint can be filed)
@@ -66,10 +66,10 @@ The complaint should:
 
 Return ONLY valid JSON.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(Deno.env.get("AI_GATEWAY_URL")!, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -123,3 +123,4 @@ Return ONLY valid JSON.`;
     );
   }
 });
+
